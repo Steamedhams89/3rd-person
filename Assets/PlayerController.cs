@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
@@ -9,6 +7,7 @@ public class PlayerController : MonoBehaviour
     public float rotationSpeed = 280.0f;
     public float jumpForce = 10f;
     public float gravityScale = 5f;
+    public static float globalGravity = -9.81f;
 
     [Header("Collision Checks")]
     // Ground checker radius
@@ -28,7 +27,7 @@ public class PlayerController : MonoBehaviour
     Vector2 moveInput;
     Vector3 moveDirection, projCamForward;
     Quaternion rotationToCam, rotationToMoveDirection;
-    Camera camera;
+    new Camera camera;
 
     Rigidbody rb;
 
@@ -40,10 +39,20 @@ public class PlayerController : MonoBehaviour
         camera = Camera.main;
     }
 
-    void FixedUpdate()
+    void OnEnable()
     {
-        // Check the physics status
-        CheckPhysics();
+        rb = GetComponent<Rigidbody>();
+        rb.useGravity = false;
+    }
+
+    void FixedUpdate()
+    {   
+        CheckPhysics(); // Check the physics status
+
+        Vector3 gravity = globalGravity * gravityScale * Vector3.up;
+        rb.AddForce(gravity, ForceMode.Acceleration);
+        
+        
     }
 
     private void Update()
@@ -55,7 +64,7 @@ public class PlayerController : MonoBehaviour
 
         moveDirection = rotationToCam * moveDirection;
 
-        rotationToMoveDirection = (moveDirection == Vector3.zero) ? Quaternion.identity : Quaternion.LookRotation(moveDirection, Vector3.up);
+        Quaternion rotationToMoveDirection = (moveDirection == Vector3.zero) ? Quaternion.identity : Quaternion.LookRotation(moveDirection, Vector3.up);
 
         transform.rotation = Quaternion.RotateTowards(transform.rotation, rotationToMoveDirection, rotationSpeed * Time.deltaTime);
 
@@ -95,6 +104,7 @@ public class PlayerController : MonoBehaviour
         horizontal = moveInput.x;
     }
 
+
     public void OnJump(InputAction.CallbackContext context)
     {
         if (context.performed && isGrounded)
@@ -103,4 +113,12 @@ public class PlayerController : MonoBehaviour
         }
     }
     #endregion
+
+    public void onMoveInput(float horizontal, float vertical)
+    {
+        this.vertical = vertical;
+        this.horizontal = horizontal;
+        Debug.Log($"input {vertical}, {horizontal}");
+    }
+
 }
